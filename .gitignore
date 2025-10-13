@@ -1,6 +1,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/windows,visualstudio,c++,qt,opencv
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,visualstudio,c++,qt,opencv
 
+*.zip
+
 ### C++ ###
 # Prerequisites
 *.d
@@ -511,4 +513,5 @@ FodyWeavers.xsd
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 
-# End of https://www.toptal.com/developers/gitignore/api/windows,visualstudio,c++,qt,opencv
+# End of https://www.toptal.com/developers/gitignore/api/windows,visualstudio,c++,qt,opencvM a p s / W o r l d  
+ 
