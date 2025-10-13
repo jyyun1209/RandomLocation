@@ -134,6 +134,9 @@ void MainWindow::slotButtonRunClicked()
 	std::vector<int> randomCoord = { 0, 0 };	// (width, height) -> (col, row)
 	int max_iter = 20;
 	int game_iter = 1;
+	int game_iter_min = 3;
+	int game_iter_max = 6;
+	int cnt = 0;
 	while (game_iter)
 	{
 		qApp->processEvents();
@@ -197,6 +200,16 @@ void MainWindow::slotButtonRunClicked()
 		//ui.plainTextEdit_output->appendPlainText(c_randomCoord);
 		//repaint();
 		Sleep(3000);
+
+		cnt++;
+		if (cnt < game_iter_min && game_iter == 0)
+		{
+			game_iter = 1;
+		}
+		if (cnt > game_iter_max)
+		{
+			game_iter = 0;
+		}
 	}
 	std::vector<double> realCoord = pixelToReal(imgW, imgH, randomCoord);
 	std::cout << "random pixel: " << randomCoord[0] << ", " << randomCoord[1] << std::endl;
