@@ -51,14 +51,16 @@ void MainWindow::connectSignals()
 {
 	connect(ui.pushButton_mapFile, &QPushButton::clicked, this, &MainWindow::slotButtonMapFileClicked);
 	connect(ui.pushButton_maskFile, &QPushButton::clicked, this, &MainWindow::slotButtonMaskFileClicked);
-	connect(ui.pushButton_run, &QPushButton::clicked, this, &MainWindow::slotButtonRunClicked);
+	//connect(ui.pushButton_run, &QPushButton::clicked, this, &MainWindow::slotButtonRunClicked);
+	connect(ui.pushButton_run, &QPushButton::clicked, this, &MainWindow::slotButtonRunClicked_PythonTest);
 }
 
 void MainWindow::disconnectSignals()
 {
 	disconnect(ui.pushButton_mapFile, &QPushButton::clicked, this, &MainWindow::slotButtonMapFileClicked);
 	disconnect(ui.pushButton_maskFile, &QPushButton::clicked, this, &MainWindow::slotButtonMaskFileClicked);
-	disconnect(ui.pushButton_run, &QPushButton::clicked, this, &MainWindow::slotButtonRunClicked);
+	//disconnect(ui.pushButton_run, &QPushButton::clicked, this, &MainWindow::slotButtonRunClicked);
+	disconnect(ui.pushButton_run, &QPushButton::clicked, this, &MainWindow::slotButtonRunClicked_PythonTest);
 }
 
 void MainWindow::slotButtonMapFileClicked()
@@ -224,4 +226,26 @@ void MainWindow::slotButtonRunClicked()
 	//repaint();
 	//cv::imshow("Random Point in Map", showImage);
 	//cv::waitKey(0);
+}
+
+void MainWindow::slotButtonRunClicked_PythonTest()
+{
+	QProcess p;
+	p.setProgram("py");
+	p.setArguments({ "-3", "..\\GeoPandas\\GeoPandas.py"});
+	p.setWorkingDirectory(QFileInfo("GeoPandas").absolutePath());
+	p.setProcessChannelMode(QProcess::MergedChannels);
+	p.start();
+
+	if (!p.waitForStarted()) { qWarning() << p.errorString(); return; }
+
+	p.closeWriteChannel();
+
+	if (!p.waitForFinished(-1)) {
+		p.kill();
+		p.waitForFinished();
+		return;
+	}
+
+	qDebug().noquote() << p.readAll();
 }
