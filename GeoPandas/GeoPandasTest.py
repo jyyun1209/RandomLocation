@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,7 +52,7 @@ def random_points_in_polygon(polygon, n):
     return pts
 
 # 3) 원하는 개수 설정
-N = 1000  # 예: 100개 좌표
+N = 1  # 예: 100개 좌표
 pts_proj = random_points_in_polygon(poly, N)
 
 # 4) GeoDataFrame으로 만들고 다시 경위도(EPSG:4326)로 변환
@@ -66,6 +67,46 @@ gdf_pts = gpd.GeoDataFrame(geometry=gpd.GeoSeries(pts_proj, crs=aea_korea)).to_c
 # gdf_pts[["lon", "lat"]].to_csv("random_points_korea.csv", index=False)
 # print("saved: random_points_korea.csv")
 
+
+sgg = gpd.read_file("sig.shp")   # 시군구
+if sgg.crs is None:
+    sgg = sgg.set_crs(5179)   # 좌표값 변경 없음, 라벨만 붙임
+sgg = sgg.to_crs(4326)
+print("sgg.crs =", sgg.crs)
+print("bounds = ", sgg.total_bounds)
+# emd = gpd.read_file("EMD.shp").to_crs(4326)   # 읍면동 (선택)
+
+# 2) 랜덤 좌표(이미 구하셨다 했으니 예시만)
+lon, lat = gdf_pts.geometry.x, gdf_pts.geometry.y
+# pt_gdf = gpd.GeoDataFrame([{"geometry": Point(lon, lat)}], crs=4326)
+pt_gdf = gdf_pts.iloc[[0]]
+
+# 3) 포인트가 포함된 폴리곤 찾기 (정확)
+#hit_sgg = gpd.sjoin(pt_gdf, sgg, how="left", predicate="within")
+# hit_emd = gpd.sjoin(pt_gdf, emd, how="left", predicate="within")
+
+# 4) 컬럼 이름은 보유 데이터에 맞게 조정하세요.
+# 흔히 SIDO_NM / SIG_KOR_NM / EMD_KOR_NM 같은 한글 컬럼이 있습니다.
+#sido = hit_sgg.iloc[0].get("SIDO_NM")
+#sigungu = hit_sgg.iloc[0].get("SIG_KOR_NM")
+# eup_myeon_dong = hit_emd.iloc[0].get("EMD_KOR_NM")
+
+# 3) 공간 조인
+hit_sgg = gpd.sjoin(pt_gdf, sgg, how="left", predicate="within")
+
+# 4) 실제 컬럼명 확인 후 가져오기
+print("cols:", hit_sgg.columns.tolist())   # 여기 찍어서 정확한 이름 확인
+# sido = hit_sgg.iloc[0].get("SIDO_NM") or hit_sgg.iloc[0].get("CTP_KOR_NM")
+# sigungu = hit_sgg.iloc[0].get("SIG_KOR_NM") or hit_sgg.iloc[0].get("SIG_ENG_NM")
+sigungu = hit_sgg.iloc[0].get("SIG_ENG_NM")
+
+# print(f"{sido} {sigungu} {eup_myeon_dong}")
+def safe_print(s):
+    enc = sys.stdout.encoding or "cp949"
+    print(str(s).encode(enc, errors="replace").decode(enc, errors="replace"))
+
+safe_print(f"{sigungu}")
+
 ax = kor.plot(edgecolor="k", facecolor="none", figsize=(6,6))
-gdf_pts.plot(ax=ax, markersize=5)
+gdf_pts.plot(ax=ax, markersize=5, color="red")
 plt.show()
