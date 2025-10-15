@@ -232,7 +232,7 @@ void MainWindow::slotButtonRunClicked_PythonTest()
 {
 	QProcess p;
 	p.setProgram("py");
-	p.setArguments({ "-3", "..\\GeoPandas\\GeoPandas.py"});
+	p.setArguments({ "-3", "..\\GeoPandas\\GeoPandasTest.py"});
 	p.setWorkingDirectory(QFileInfo("GeoPandas").absolutePath());
 	p.setProcessChannelMode(QProcess::MergedChannels);
 	p.start();
