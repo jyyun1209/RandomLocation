@@ -91,7 +91,7 @@ sido = hit_sd.iloc[0].get("CTP_ENG_NM")
 sigungu = hit_sgg.iloc[0].get("SIG_ENG_NM")
 # print(sido, sigungu)
 
-name = sido + sigungu
+name = f"{sido} {sigungu}"
 print(json.dumps({"lat": float(lat), "lon": float(lon), "name": name}, ensure_ascii=False), flush=True)
 
 # ax = kor.plot(edgecolor="k", facecolor="none", figsize=(6,6))
