@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RandomLocation", "RandomLoc
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "GeoPandas", "GeoPandas\GeoPandas.pyproj", "{4EC3991F-2429-4B02-A9A3-BED64C1E85EB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RandomLocationWinForm", "RandomLocationWinForm\RandomLocationWinForm.csproj", "{BAB98E21-9072-4403-BA18-32AF0AE7553E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RandomLocationWinForm", "RandomLocationWinForm\RandomLocationWinForm.csproj", "{BAB98E21-9072-4403-BA18-32AF0AE7553E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

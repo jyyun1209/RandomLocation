@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 import sys
 import threading
@@ -8,6 +8,7 @@ import numpy as np
 from shapely.geometry import Point
 from shapely.ops import unary_union
 import json
+import time
 
 
 # print("This is Python")
@@ -48,7 +49,7 @@ def random_points_in_polygon(polygon, n):
     return pts
 
 
-N = 1
+N = 20
 pts_proj = random_points_in_polygon(poly, N)
 
 
@@ -61,8 +62,8 @@ gdf_pts = gpd.GeoDataFrame(geometry=gpd.GeoSeries(pts_proj, crs=aea_korea)).to_c
 # gdf_pts[["lon", "lat"]].to_csv("random_points_korea.csv", index=False)
 # print("saved: random_points_korea.csv")
 
-sd = gpd.read_file("ctprvn.shp") # �õ�
-sgg = gpd.read_file("sig.shp")   # �ñ���
+sd = gpd.read_file("ctprvn.shp") # 시도
+sgg = gpd.read_file("sig.shp")   # 시군구
 
 if sd.crs is None:
     sd = sd.set_crs(5179)
@@ -78,21 +79,40 @@ sgg = sgg.to_crs(4326)
 
 
 lon, lat = gdf_pts.geometry.x, gdf_pts.geometry.y
-pt_gdf = gdf_pts.iloc[[0]]
 
-hit_sd = gpd.sjoin(pt_gdf, sd, how="left", predicate="within")
-hit_sgg = gpd.sjoin(pt_gdf, sgg, how="left", predicate="within")
+for i, pt_gdf in gdf_pts.iterrows():
+    lon = float(pt_gdf.geometry.x)
+    lat = float(pt_gdf.geometry.y)
+
+    single_gdf = gpd.GeoDataFrame([pt_gdf], geometry=[pt_gdf.geometry], crs=gdf_pts.crs)
+
+    # 행정구역 찾기
+    hit_sd = gpd.sjoin(single_gdf, sd, how="left", predicate="within")
+    hit_sgg = gpd.sjoin(single_gdf, sgg, how="left", predicate="within")
+
+    sido = hit_sd.iloc[0].get("CTP_ENG_NM")
+    sigungu = hit_sgg.iloc[0].get("SIG_ENG_NM")
+
+    name = f"{sido or ''} {sigungu or ''}".strip()
+
+    print(json.dumps({"lat": lat, "lon": lon, "name": name}, ensure_ascii=False), flush=True)
+    time.sleep(1)
+    
+# pt_gdf = gdf_pts.iloc[[0]]
+
+# hit_sd = gpd.sjoin(pt_gdf, sd, how="left", predicate="within")
+# hit_sgg = gpd.sjoin(pt_gdf, sgg, how="left", predicate="within")
 
 
-# print("cols:", hit_sd.columns.tolist())
-# print("cols:", hit_sgg.columns.tolist())
+# # print("cols:", hit_sd.columns.tolist())
+# # print("cols:", hit_sgg.columns.tolist())
 
-sido = hit_sd.iloc[0].get("CTP_ENG_NM")
-sigungu = hit_sgg.iloc[0].get("SIG_ENG_NM")
-# print(sido, sigungu)
+# sido = hit_sd.iloc[0].get("CTP_ENG_NM")
+# sigungu = hit_sgg.iloc[0].get("SIG_ENG_NM")
+# # print(sido, sigungu)
 
-name = f"{sido} {sigungu}"
-print(json.dumps({"lat": float(lat), "lon": float(lon), "name": name}, ensure_ascii=False), flush=True)
+# name = f"{sido} {sigungu}"
+# print(json.dumps({"lat": float(lat), "lon": float(lon), "name": name}, ensure_ascii=False), flush=True)
 
 # ax = kor.plot(edgecolor="k", facecolor="none", figsize=(6,6))
 # gdf_pts.plot(ax=ax, markersize=5, color="red")
