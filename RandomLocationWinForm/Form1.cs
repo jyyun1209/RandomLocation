@@ -40,7 +40,7 @@ namespace RandomLocationWinForm
             webView21.Source = new Uri(htmlPath);
             await tcs.Task;
 
-            var workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\GeoPandas"));
+            var workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\GeoPandas"));
             var scriptPath = Path.Combine(workingDir, "GeoPandasTest.py");
             // 로드 완료 후 마커 추가
             webView21.NavigationCompleted += async (_, __) =>

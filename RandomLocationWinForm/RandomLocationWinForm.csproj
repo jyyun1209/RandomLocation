@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <BaseOutputPath>D:\junyoung\12.Project\00.RandomLocation\x64</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
