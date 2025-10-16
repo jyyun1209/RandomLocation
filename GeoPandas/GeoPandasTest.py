@@ -7,9 +7,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from shapely.geometry import Point
 from shapely.ops import unary_union
+import json
 
-plt.ion()
-print("This is Python")
+
+# print("This is Python")
 
 # url = "https://naturalearth.s3.amazonaws.com/110m_cultural/ne_110m_admin_0_countries.zip"
 # url = "https://naturalearth.s3.amazonaws.com/50m_cultural/ne_50m_admin_0_countries.zip"
@@ -52,7 +53,7 @@ pts_proj = random_points_in_polygon(poly, N)
 
 
 gdf_pts = gpd.GeoDataFrame(geometry=gpd.GeoSeries(pts_proj, crs=aea_korea)).to_crs(4326)
-print(gdf_pts.head())
+# print(gdf_pts.head())
 
 
 # gdf_pts["lon"] = gdf_pts.geometry.x
@@ -70,27 +71,29 @@ if sgg.crs is None:
 sd = sd.to_crs(4326)
 sgg = sgg.to_crs(4326)
 
-print("sd.crs =", sd.crs)
-print("sgg.crs =", sgg.crs)
-print("sd bounds = ", sd.total_bounds)
-print("sgg bounds = ", sgg.total_bounds)
+# print("sd.crs =", sd.crs)
+# print("sgg.crs =", sgg.crs)
+# print("sd bounds = ", sd.total_bounds)
+# print("sgg bounds = ", sgg.total_bounds)
 
 
 lon, lat = gdf_pts.geometry.x, gdf_pts.geometry.y
 pt_gdf = gdf_pts.iloc[[0]]
 
-
 hit_sd = gpd.sjoin(pt_gdf, sd, how="left", predicate="within")
 hit_sgg = gpd.sjoin(pt_gdf, sgg, how="left", predicate="within")
 
 
-print("cols:", hit_sd.columns.tolist())
-print("cols:", hit_sgg.columns.tolist())
+# print("cols:", hit_sd.columns.tolist())
+# print("cols:", hit_sgg.columns.tolist())
 
 sido = hit_sd.iloc[0].get("CTP_ENG_NM")
 sigungu = hit_sgg.iloc[0].get("SIG_ENG_NM")
-print(sido, sigungu)
+# print(sido, sigungu)
 
-ax = kor.plot(edgecolor="k", facecolor="none", figsize=(6,6))
-gdf_pts.plot(ax=ax, markersize=5, color="red")
-plt.show()
+name = sido + sigungu
+print(json.dumps({"lat": float(lat), "lon": float(lon), "name": name}, ensure_ascii=False), flush=True)
+
+# ax = kor.plot(edgecolor="k", facecolor="none", figsize=(6,6))
+# gdf_pts.plot(ax=ax, markersize=5, color="red")
+# plt.show()
