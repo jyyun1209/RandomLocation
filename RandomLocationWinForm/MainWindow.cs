@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Text;
 using System.Text.Json;
@@ -106,7 +107,7 @@ namespace RandomLocationWinForm
             }
         }
 
-        private async Task RunPythonAndStreamPointsAsync(string fileName, string arguments, string workingDir)
+        private async Task<(PointDto? point, string? label)> RunPythonAndStreamPointsAsync(string fileName, string arguments, string workingDir)
         {
             var psi = new ProcessStartInfo
             {
@@ -125,6 +126,9 @@ namespace RandomLocationWinForm
             using var p = new Process { StartInfo = psi };
             p.Start();
 
+            PointDto? lastCoord = null;
+            string? lastLabel = null;
+
             while (!p.HasExited)
             {
                 string? line = await p.StandardOutput.ReadLineAsync();
@@ -135,9 +139,12 @@ namespace RandomLocationWinForm
                     var pt = JsonSerializer.Deserialize<PointDto>(line);
                     if (pt != null)
                     {
+                        lastCoord = pt;
                         await this.InvokeAsync(async () =>
                         {
                             var label = JsonSerializer.Serialize(pt.name ?? "Point");
+                            lastLabel = label;
+
                             await webView21.ExecuteScriptAsync($"updateMarker({pt.lat}, {pt.lon}, {label})");
                         });
                     }
@@ -151,6 +158,8 @@ namespace RandomLocationWinForm
             string err = await p.StandardError.ReadToEndAsync();
             if (!string.IsNullOrWhiteSpace(err))
                 Debug.WriteLine("Python stderr:\n" + err);
+
+            return (lastCoord, lastLabel);
         }
 
         private async void playToolStripMenuItem_Click(object sender, EventArgs e)
@@ -160,13 +169,18 @@ namespace RandomLocationWinForm
             var item = (ToolStripMenuItem)sender;
             string originalText = item.Text;
 
+            PointDto? lastCoord = null;
+            string? lastLabel = null;
+
             try
             {
+                await webView21.ExecuteScriptAsync("initFocus();");
+
                 item.Enabled = false;
                 item.Text = "Running...";
 
                 var workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\GeoPandas"));
-                await RunPythonAndStreamPointsAsync
+                (lastCoord, lastLabel) = await RunPythonAndStreamPointsAsync
                 (
                     fileName: "python",
                     arguments: $"-u \"GeoPandasTest.py",
@@ -176,6 +190,14 @@ namespace RandomLocationWinForm
             finally
             {
                 await webView21.CoreWebView2.ExecuteScriptAsync("hideLoadingMessage();");
+
+                if (lastCoord != null)
+                {
+                    var focusScript = string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                        "focusTo({0}, {1}, {2})", lastCoord.lat, lastCoord.lon, 3);
+                    await webView21.ExecuteScriptAsync(focusScript);
+                    await webView21.ExecuteScriptAsync($"updateMarker_pop({lastCoord.lat}, {lastCoord.lon}, {lastLabel})");
+                }
 
                 item.Enabled = true;
                 item.Text = originalText;

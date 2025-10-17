@@ -105,7 +105,7 @@ for i, pt_gdf in gdf_pts.iterrows():
     #     json.dump({"lat": lat, "lon": lon, "name": name}, f, ensure_ascii=False, indent=2)
         
     print(json.dumps({"lat": lat, "lon": lon, "name": name}, ensure_ascii=False), flush=True)
-    time.sleep(1)
+    time.sleep(0.8)
     
 # pt_gdf = gdf_pts.iloc[[0]]
 
