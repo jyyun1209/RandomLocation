@@ -74,15 +74,19 @@
     <script>
         const map = L.map('map',
             {
-                center: [36.5, 127.8],
-                zoom: 7,
-                attributionControl: true,
                 zoomControl: false
             }
         );
 
+        const southKoreaBounds = [
+            [33.1, 124.9],
+            [38.5, 131.9]
+        ];
+
+        map.fitBounds(southKoreaBounds, { padding: [0, 0] });
+
         L.control.zoom({
-            position: 'bottomright' // 👈 위치 변경 (예: 오른쪽 아래)
+            position: 'bottomright'
         }).addTo(map);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
