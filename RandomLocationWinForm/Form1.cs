@@ -40,8 +40,8 @@ namespace RandomLocationWinForm
             webView21.Source = new Uri(htmlPath);
             await tcs.Task;
 
-            var workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\GeoPandas"));
-            var scriptPath = Path.Combine(workingDir, "GeoPandasTest.py");
+            var workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\GeoPandas"));
+            //var scriptPath = Path.Combine(workingDir, "GeoPandasTest.py");
             // 로드 완료 후 마커 추가
             webView21.NavigationCompleted += async (_, __) =>
             {
@@ -91,8 +91,7 @@ namespace RandomLocationWinForm
 
             await RunPythonAndStreamPointsAsync(
                 fileName: "python",
-                //arguments: $"-m debugpy --listen 127.0.0.1:5678 --wait-for-client -u \"{scriptPath}\"",
-                arguments: $"-u \"{scriptPath}\"",
+                arguments: $"-u \"GeoPandasTest.py",
                 workingDir: workingDir
             );
         }
