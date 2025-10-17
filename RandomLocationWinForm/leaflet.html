@@ -1,30 +1,183 @@
-﻿<!doctype html><html><head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<style>html,body,#map{height:100%;margin:0}</style>
-</head><body>
-<div id="map"></div>
-<script>
-    const map = L.map('map').setView([36.5, 127.8], 7);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-    let currentMarker = null;
+    <style>
+        html,
+        body,
+        #map{height:100%;margin:0}
 
-    // C#에서 호출할 함수들
-    window.addMarker = (lat, lon, text) =>
-        L.marker([lat, lon]).addTo(map).bindPopup(text || '');
+        /* === fade-in/out 애니메이션 정의 === */
+        @keyframes fadeIn
+        {
+            from
+            {
+                opacity: 0;
+            }
 
-    window.updateMarker = (lat, lon, text) => {
-        if (currentMarker) {
-            map.removeLayer(currentMarker); // 기존 마커 제거
+            to
+            {
+                opacity: 1;
+            }
         }
-        currentMarker = L.marker([lat, lon]).addTo(map);
-        if (text) currentMarker.bindPopup(text);
-    }
 
-    window.addGeoJson = (g) => L.geoJSON(g).addTo(map);
-</script>
-</body></html>
+        @keyframes fadeOut
+        {
+            from
+            {
+                opacity: 1;
+            }
+
+            to
+            {
+                opacity: 0;
+            }
+        }
+
+        /* === 로딩 오버레이 기본 스타일 === */
+        #loadingOverlay 
+        {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            z-index: 2000;
+            font-family: "Segoe UI", sans-serif;
+            opacity: 0;
+            animation: fadeIn 0.8s forwards;
+        }
+
+        /* fade-out 시 추가될 클래스 */
+        .fade-out 
+        {
+            animation: fadeOut 0.8s forwards;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script>
+        const map = L.map('map',
+            {
+                center: [36.5, 127.8],
+                zoom: 7,
+                attributionControl: true,
+                zoomControl: false
+            }
+        );
+
+        L.control.zoom({
+            position: 'bottomright' // 👈 위치 변경 (예: 오른쪽 아래)
+        }).addTo(map);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let currentMarker = null;
+
+        //-- C#에서 호출되는 함수 --//
+        window.addMarker = (lat, lon, text) =>  // addMarker: 지도 위에 마커를 추가
+        {
+            L.marker([lat, lon]).addTo(map).bindPopup(text || '');
+        }
+
+        window.updateMarker = (lat, lon, text) =>   // updateMarker: 기존의 마커를 지우고 새로운 마커로 업데이트
+        {
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+            currentMarker = L.marker([lat, lon]).addTo(map);
+            if (text) currentMarker.bindPopup(text);
+        }
+
+        window.addGeoJson = (g) => L.geoJSON(g).addTo(map);
+    </script>
+
+    <script>
+        let loadingInterval = null;
+
+        function showLoadingMessage() {
+            if (document.getElementById('loadingOverlay')) return;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+            overlay.style.display = 'flex';
+            overlay.style.flexDirection = 'column';
+            overlay.style.justifyContent = 'center';
+            overlay.style.alignItems = 'center';
+            overlay.style.color = 'white';
+            overlay.style.fontSize = '24px';
+            overlay.style.zIndex = '2000';
+            overlay.style.fontFamily = 'Segoe UI, sans-serif';
+            overlay.innerHTML = `
+            <div id="loadingText">어디로 가게 될까요?</div>
+            <div style="margin-top: 20px; font-size:18px; opacity:0.8;">🗺️ 여행 경로를 탐색 중입니다...</div>
+          `;
+            document.body.appendChild(overlay);
+
+            const messages = [
+                "🧭 지도를 펼치는 중...",
+                "✈️ 어디로 가게 될까요?",
+                "🌍 랜덤 여행지를 고르는 중...",
+                "🏝️ 준비 중입니다..."
+            ];
+
+            let i = 0;
+            loadingInterval = setInterval(() =>
+            {
+                const text = document.getElementById("loadingText");
+                if (!text) {
+                    clearInterval(loadingInterval);
+                    return;
+                }
+                text.textContent = messages[i % messages.length];
+                i++;
+            }, 1000);
+        }
+
+        function hideLoadingMessage()
+        {
+            const overlay = document.getElementById('loadingOverlay');
+            if (!overlay) return;
+
+            if (loadingInterval)
+            {
+                clearInterval(loadingInterval);
+                loadingInterval = null;
+            }
+
+            overlay.style.animation = 'none';
+            void overlay.offsetHeight;
+
+            overlay.classList.add('fade-out');
+
+            overlay.addEventListener('animationend', () =>
+            {
+                overlay.remove();
+            }, { once: true });
+        }
+    </script>
+
+</body>
+</html>

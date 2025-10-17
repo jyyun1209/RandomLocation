@@ -1,27 +1,49 @@
 ﻿using System.Diagnostics;
+using System.Drawing.Drawing2D;
 using System.Text;
 using System.Text.Json;
 
 namespace RandomLocationWinForm
 {
-    public static class ControlExtensions
+    public partial class MainWindow : Form
     {
-        public static Task InvokeAsync(this Control control, Func<Task> func)
-        {
-            var tcs = new TaskCompletionSource();
-            control.BeginInvoke(async () =>
-            {
-                try { await func(); tcs.SetResult(); }
-                catch (Exception ex) { tcs.SetException(ex); }
-            });
-            return tcs.Task;
-        }
-    }
-    public partial class Form1 : Form
-    {
-        public Form1()
+        public MainWindow()
         {
             InitializeComponent();
+
+            menuStrip1.BackColor = Color.FromArgb(240, 240, 240);
+
+            menuStrip1.Margin = new Padding(0);
+            menuStrip1.Padding = new Padding(5, 3, 5, 2);
+            menuStrip1.ForeColor = Color.Black;
+
+            //Panel line = new Panel();
+            //line.Dock = DockStyle.Top;
+            //line.Height = 1;
+            //line.BackColor = Color.FromArgb(200, 200, 200); // 옅은 회색 라인
+            //this.Controls.Add(line);
+            //line.BringToFront();
+
+            // 메뉴바 아래 경계선 (밝은 선)
+            Panel borderBottom = new Panel();
+            borderBottom.Dock = DockStyle.Top;
+            borderBottom.Height = 1;
+            borderBottom.BackColor = Color.FromArgb(220, 220, 220);
+            this.Controls.Add(borderBottom);
+            borderBottom.BringToFront();
+
+            // 메뉴바 위 경계선 (살짝 어두운 선)
+            Panel borderTop = new Panel();
+            borderTop.Dock = DockStyle.Top;
+            borderTop.Height = 1;
+            borderTop.BackColor = Color.FromArgb(180, 180, 180);
+            this.Controls.Add(borderTop);
+            borderTop.BringToFront();
+
+            borderTop.SendToBack();
+            this.Controls.SetChildIndex(borderTop, 0);
+            this.Controls.SetChildIndex(menuStrip1, 1);
+            this.Controls.SetChildIndex(borderBottom, 2);
         }
 
         private bool _loaded;
@@ -39,61 +61,6 @@ namespace RandomLocationWinForm
             var htmlPath = Path.Combine(Application.StartupPath, "leaflet.html");
             webView21.Source = new Uri(htmlPath);
             await tcs.Task;
-
-            var workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\GeoPandas"));
-            //var scriptPath = Path.Combine(workingDir, "GeoPandasTest.py");
-            // 로드 완료 후 마커 추가
-            webView21.NavigationCompleted += async (_, __) =>
-            {
-                //await webView21.ExecuteScriptAsync(
-                //    "addMarker(37.5665,126.9780,'서울');");
-                //await webView21.ExecuteScriptAsync(
-                //    "addMarker(35.1796,129.0756,'부산');");
-
-                // GeoJSON 예시(FeatureCollection)
-                var geojson = JsonSerializer.Serialize(new
-                {
-                    type = "FeatureCollection",
-                    features = new[] {
-                    new {
-                        type = "Feature",
-                        geometry = new { type = "LineString",
-                            coordinates = new[] {
-                                new[] {126.9780, 37.5665}, // [lon,lat]
-                                new[] {129.0756, 35.1796}
-                            }
-                        },
-                        properties = new { name = "서울-부산" }
-                    }
-                }
-                });
-                //await webView21.ExecuteScriptAsync($"addGeoJson({geojson})");
-            };
-
-            //var pt = await RunPythonAndGetPointAsync(
-            //    fileName: "python",
-            //    //arguments: $"-m debugpy --listen 127.0.0.1:5678 --wait-for-client -u \"{scriptPath}\"",
-            //    arguments: $"-u \"{scriptPath}\"",
-            //    workingDir: workingDir
-            //);
-
-            //if (pt is not null)
-            //{
-            //    // 3) 지도에 표시
-            //    var label = JsonSerializer.Serialize(pt.name ?? "Point");
-            //    await webView21.ExecuteScriptAsync($"setCenter({pt.lat}, {pt.lon}, 13)");
-            //    await webView21.ExecuteScriptAsync($"addMarker({pt.lat}, {pt.lon}, {label})");
-            //}
-            //else
-            //{
-            //    MessageBox.Show("파이썬에서 좌표를 받지 못했습니다.");
-            //}
-
-            await RunPythonAndStreamPointsAsync(
-                fileName: "python",
-                arguments: $"-u \"GeoPandasTest.py",
-                workingDir: workingDir
-            );
         }
         private record PointDto(double lat, double lon, string? name);
         private async Task<PointDto?> RunPythonAndGetPointAsync(string fileName, string arguments, string workingDir)
@@ -108,7 +75,6 @@ namespace RandomLocationWinForm
                 RedirectStandardError = true,
                 CreateNoWindow = true,
                 StandardOutputEncoding = Encoding.UTF8,
-                // UTF-8 강제 (Windows에서 한글 안전)
             };
             // 파이썬 전체를 UTF-8 모드로
             psi.EnvironmentVariables["PYTHONUTF8"] = "1";
@@ -170,7 +136,6 @@ namespace RandomLocationWinForm
             using var p = new Process { StartInfo = psi };
             p.Start();
 
-            // ✅ 비동기 읽기 — 실시간으로 한 줄씩 수신
             while (!p.HasExited)
             {
                 string? line = await p.StandardOutput.ReadLineAsync();
@@ -181,7 +146,6 @@ namespace RandomLocationWinForm
                     var pt = JsonSerializer.Deserialize<PointDto>(line);
                     if (pt != null)
                     {
-                        // 메인 스레드에서 WebView2 조작
                         await this.InvokeAsync(async () =>
                         {
                             var label = JsonSerializer.Serialize(pt.name ?? "Point");
@@ -195,10 +159,51 @@ namespace RandomLocationWinForm
                 }
             }
 
-            // 남은 에러 메시지 출력 (선택)
             string err = await p.StandardError.ReadToEndAsync();
             if (!string.IsNullOrWhiteSpace(err))
                 Debug.WriteLine("Python stderr:\n" + err);
+        }
+
+        private async void playToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await webView21.CoreWebView2.ExecuteScriptAsync("showLoadingMessage();");
+
+            var item = (ToolStripMenuItem)sender;
+            string originalText = item.Text;
+
+            try
+            {
+                item.Enabled = false;
+                item.Text = "Running...";
+
+                var workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\GeoPandas"));
+                await RunPythonAndStreamPointsAsync
+                (
+                    fileName: "python",
+                    arguments: $"-u \"GeoPandasTest.py",
+                    workingDir: workingDir
+                );
+            }
+            finally
+            {
+                await webView21.CoreWebView2.ExecuteScriptAsync("hideLoadingMessage();");
+
+                item.Enabled = true;
+                item.Text = originalText;
+            }
+        }
+    }
+    public static class ControlExtensions
+    {
+        public static Task InvokeAsync(this Control control, Func<Task> func)
+        {
+            var tcs = new TaskCompletionSource();
+            control.BeginInvoke(async () =>
+            {
+                try { await func(); tcs.SetResult(); }
+                catch (Exception ex) { tcs.SetException(ex); }
+            });
+            return tcs.Task;
         }
     }
 }
