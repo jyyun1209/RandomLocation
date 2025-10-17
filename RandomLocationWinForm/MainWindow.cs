@@ -107,12 +107,12 @@ namespace RandomLocationWinForm
             }
         }
 
-        private async Task<(PointDto? point, string? label)> RunPythonAndStreamPointsAsync(string fileName, string arguments, string workingDir)
+        private async Task<(PointDto? point, string? label)> RunPythonAndStreamPointsAsync(string pythonExe, string scriptPath, string workingDir)
         {
             var psi = new ProcessStartInfo
             {
-                FileName = fileName,
-                Arguments = $"-X utf8" + arguments,
+                FileName = pythonExe,
+                Arguments = $"-X utf8 -u \"{scriptPath}\"",
                 WorkingDirectory = workingDir,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -161,7 +161,12 @@ namespace RandomLocationWinForm
 
             return (lastCoord, lastLabel);
         }
-
+        private static (string scriptPath, string workingDir) ResolveGeoPandasScript()
+        {
+            var script = Path.Combine(AppContext.BaseDirectory, "GeoPandasTest.py");
+            var dir = Path.GetDirectoryName(script)!;
+            return (script, dir);
+        }
         private async void playToolStripMenuItem_Click(object sender, EventArgs e)
         {
             await webView21.CoreWebView2.ExecuteScriptAsync("showLoadingMessage();");
@@ -179,11 +184,14 @@ namespace RandomLocationWinForm
                 item.Enabled = false;
                 item.Text = "Running...";
 
-                var workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\GeoPandas"));
+                //var workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\GeoPandas"));
+                var (scriptPath, workingDir) = ResolveGeoPandasScript();
+                var pythonExe = "python";
+
                 (lastCoord, lastLabel) = await RunPythonAndStreamPointsAsync
                 (
-                    fileName: "python",
-                    arguments: $"-u \"GeoPandasTest.py",
+                    pythonExe: pythonExe,
+                    scriptPath: scriptPath,
                     workingDir: workingDir
                 );
             }
