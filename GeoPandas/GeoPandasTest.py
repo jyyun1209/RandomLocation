@@ -1,5 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 
+import io
 import sys
 import threading
 import geopandas as gpd
@@ -9,7 +10,9 @@ from shapely.geometry import Point
 from shapely.ops import unary_union
 import json
 import time
+from pathlib import Path
 
+sys.stdout.reconfigure(encoding='utf-8')
 
 # print("This is Python")
 
@@ -62,8 +65,8 @@ gdf_pts = gpd.GeoDataFrame(geometry=gpd.GeoSeries(pts_proj, crs=aea_korea)).to_c
 # gdf_pts[["lon", "lat"]].to_csv("random_points_korea.csv", index=False)
 # print("saved: random_points_korea.csv")
 
-sd = gpd.read_file("ctprvn.shp") # 시도
-sgg = gpd.read_file("sig.shp")   # 시군구
+sd = gpd.read_file("ctprvn.shp", encoding="cp949") # 시도
+sgg = gpd.read_file("sig.shp" ,encoding="cp949")   # 시군구
 
 if sd.crs is None:
     sd = sd.set_crs(5179)
@@ -90,11 +93,17 @@ for i, pt_gdf in gdf_pts.iterrows():
     hit_sd = gpd.sjoin(single_gdf, sd, how="left", predicate="within")
     hit_sgg = gpd.sjoin(single_gdf, sgg, how="left", predicate="within")
 
-    sido = hit_sd.iloc[0].get("CTP_ENG_NM")
-    sigungu = hit_sgg.iloc[0].get("SIG_ENG_NM")
+    sido_eng = hit_sd.iloc[0].get("CTP_ENG_NM")
+    sigungu_eng = hit_sgg.iloc[0].get("SIG_ENG_NM")
+    sido_kor = hit_sd.iloc[0].get("CTP_KOR_NM")
+    sigungu_kor = hit_sgg.iloc[0].get("SIG_KOR_NM")
 
-    name = f"{sido or ''} {sigungu or ''}".strip()
+    name = f"{sido_kor or ''} {sigungu_kor or ''}".strip()
 
+    # out = Path("check_utf8.json")
+    # with out.open("w", encoding="utf-8", newline="\n") as f:
+    #     json.dump({"lat": lat, "lon": lon, "name": name}, f, ensure_ascii=False, indent=2)
+        
     print(json.dumps({"lat": lat, "lon": lon, "name": name}, ensure_ascii=False), flush=True)
     time.sleep(1)
     

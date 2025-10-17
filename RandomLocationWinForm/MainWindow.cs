@@ -68,7 +68,7 @@ namespace RandomLocationWinForm
             var psi = new ProcessStartInfo
             {
                 FileName = fileName,
-                Arguments = arguments,
+                Arguments = $"-X utf8" + arguments,
                 WorkingDirectory = workingDir,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -76,30 +76,18 @@ namespace RandomLocationWinForm
                 CreateNoWindow = true,
                 StandardOutputEncoding = Encoding.UTF8,
             };
-            // 파이썬 전체를 UTF-8 모드로
             psi.EnvironmentVariables["PYTHONUTF8"] = "1";
+            psi.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
 
             using var p = new Process { StartInfo = psi };
-            var output = new StringBuilder();
-            var error = new StringBuilder();
-            p.OutputDataReceived += (_, e) => { if (e.Data != null) output.AppendLine(e.Data); };
-            p.ErrorDataReceived += (_, e) => { if (e.Data != null) error.AppendLine(e.Data); };
+            p.Start();
 
-            if (!p.Start())
-                return null;
+            string output = await p.StandardOutput.ReadToEndAsync();
+            string error = await p.StandardError.ReadToEndAsync();
 
-            p.BeginOutputReadLine();
-            p.BeginErrorReadLine();
+            await p.WaitForExitAsync();
 
-            // 타임아웃은 상황에 맞게 (여기선 10초)
-            if (!p.WaitForExit(10_000))
-            {
-                try { p.Kill(); } catch { /* ignore */ }
-                return null;
-            }
-
-            // ✅ Python이 JSON 한 줄만 출력하도록 가정
-            var jsonLine = output.ToString().Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+            var jsonLine = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
             if (string.IsNullOrWhiteSpace(jsonLine))
             {
                 Debug.WriteLine("STDERR: " + error);
@@ -123,7 +111,7 @@ namespace RandomLocationWinForm
             var psi = new ProcessStartInfo
             {
                 FileName = fileName,
-                Arguments = arguments,
+                Arguments = $"-X utf8" + arguments,
                 WorkingDirectory = workingDir,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -132,6 +120,7 @@ namespace RandomLocationWinForm
                 StandardOutputEncoding = Encoding.UTF8
             };
             psi.EnvironmentVariables["PYTHONUTF8"] = "1";
+            psi.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8";
 
             using var p = new Process { StartInfo = psi };
             p.Start();
