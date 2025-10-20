@@ -10,6 +10,16 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon\Main.ico</ApplicationIcon>
+
+	<!--어셈블리 정보-->
+	<AssemblyTitle>RandomLocation (https://github.com/jyyun1209/RandomLocation)</AssemblyTitle>
+	<Description>랜덤 여행지 선택 어플리케이션 - https://github.com/jyyun1209/RandomLocation (세욱아 고맙다)</Description>
+	<Company>Junyoung Yun</Company>
+	<Product>RandomLocation</Product>
+	<Authors>윤준영</Authors>
+	<Copyright>© 2025 Junyoung Yun (Thanks to Seuk Lee)</Copyright>
+	<Version>2.0.0</Version>
+	<FileVersion>2.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
