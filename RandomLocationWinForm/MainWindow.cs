@@ -18,14 +18,6 @@ namespace RandomLocationWinForm
             menuStrip1.Padding = new Padding(5, 3, 5, 2);
             menuStrip1.ForeColor = Color.Black;
 
-            //Panel line = new Panel();
-            //line.Dock = DockStyle.Top;
-            //line.Height = 1;
-            //line.BackColor = Color.FromArgb(200, 200, 200); // 옅은 회색 라인
-            //this.Controls.Add(line);
-            //line.BringToFront();
-
-            // 메뉴바 아래 경계선 (밝은 선)
             Panel borderBottom = new Panel();
             borderBottom.Dock = DockStyle.Top;
             borderBottom.Height = 1;
@@ -33,7 +25,6 @@ namespace RandomLocationWinForm
             this.Controls.Add(borderBottom);
             borderBottom.BringToFront();
 
-            // 메뉴바 위 경계선 (살짝 어두운 선)
             Panel borderTop = new Panel();
             borderTop.Dock = DockStyle.Top;
             borderTop.Height = 1;
@@ -186,7 +177,8 @@ namespace RandomLocationWinForm
 
                 //var workingDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\GeoPandas"));
                 var (scriptPath, workingDir) = ResolveGeoPandasScript();
-                var pythonExe = "python";
+                //var pythonExe = "python";
+                var pythonExe = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "python-3.9", "python.exe");
 
                 (lastCoord, lastLabel) = await RunPythonAndStreamPointsAsync
                 (

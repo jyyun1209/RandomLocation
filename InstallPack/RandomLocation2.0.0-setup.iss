@@ -31,7 +31,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
-OutputDir=D:\junyoung\12.Project\00.RandomLocation\InstallPack
+OutputDir=.
 OutputBaseFilename=RandomLocation2.0.0-setup
 SolidCompression=yes
 WizardStyle=modern
@@ -44,9 +44,25 @@ Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "D:\junyoung\12.Project\00.RandomLocation\InstallPack\core_winform\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\junyoung\12.Project\00.RandomLocation\InstallPack\core_winform\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\x64\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\x64\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+
+[Code]
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  // 실제 설치가 시작되기 직전 시점
+  if CurStep = ssInstall then
+  begin
+    // 기존 설치 폴더가 존재한다면 삭제
+    if DirExists(ExpandConstant('{app}')) then
+    begin
+      Log('Deleting existing installation folder: ' + ExpandConstant('{app}'));
+      // (하위 폴더 포함, 읽기전용 포함, 폴더 자체 포함)
+      DelTree(ExpandConstant('{app}'), True, True, True);
+    end;
+  end;
+end;
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
