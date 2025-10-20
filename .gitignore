@@ -516,6 +516,6 @@ FodyWeavers.xsd
 # End of https://www.toptal.com/developers/gitignore/api/windows,visualstudio,c++,qt,opencvM a p s / W o r l d 
  
 !*.dll
-3rdparty\*
+3rdparty
 !3rdparty\tools\
-/3rdparty/python-3.9
+!3rdparty\tools\**
