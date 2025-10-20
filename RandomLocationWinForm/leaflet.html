@@ -1,0 +1,225 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+        html,
+        body,
+        #map{height:100%;margin:0}
+
+        /* === fade-in/out 애니메이션 정의 === */
+        @keyframes fadeIn
+        {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut
+        {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* === 로딩 오버레이 기본 스타일 === */
+        #loadingOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            z-index: 2000;
+            font-family: "Segoe UI", sans-serif;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 1.0s forwards;
+        }
+
+        .fade-out 
+        {
+            animation: fadeOut 1.0s forwards;
+            pointer-events: none;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: rgba(30, 30, 30, 0.9); /* 어두운 반투명 배경 */
+            color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            font-family: "Segoe UI", "Noto Sans KR", sans-serif;
+            font-size: 10px;
+            transition: all 0.2s ease;
+        }
+
+        /* 팝업 안쪽 텍스트 */
+        .leaflet-popup-content {
+            margin: 0;
+            text-align: center;
+        }
+
+        /* 팝업 화살표 꼬리 */
+        .leaflet-popup-tip {
+            background: rgba(30, 30, 30, 0.9);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script>
+        const map = L.map('map',
+            {
+                zoomControl: false
+            }
+        );
+
+        const southKoreaBounds = [
+            [33.1, 124.9],
+            [38.5, 131.9]
+        ];
+
+        map.fitBounds(southKoreaBounds, { padding: [0, 0] });
+
+        L.control.zoom({
+            position: 'bottomright'
+        }).addTo(map);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let currentMarker = null;
+
+        //-- C#에서 호출되는 함수 --//
+        window.addMarker = (lat, lon, text) =>  // addMarker: 지도 위에 마커를 추가
+        {
+            L.marker([lat, lon]).addTo(map).bindPopup(text || '');
+        }
+
+        window.updateMarker = (lat, lon, text) =>   // updateMarker: 기존의 마커를 지우고 새로운 마커로 업데이트
+        {
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+            currentMarker = L.marker([lat, lon]).addTo(map);
+            if (text) currentMarker.bindPopup(text);
+        }
+
+        window.updateMarker_pop = (lat, lon, text) =>   // updateMarker: 기존의 마커를 지우고 새로운 마커로 업데이트
+        {
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+            currentMarker = L.marker([lat, lon]).addTo(map);
+            if (text) currentMarker.bindPopup(text).openPopup();
+        }
+
+        window.initFocus = () => {  // initFocus: 지도 초기 상태
+            map.flyToBounds(southKoreaBounds,
+                {
+                    padding: [0, 0],
+                    duration: 1.0
+                });
+        };
+
+        window.focusTo = (lat, lon, zoomDelta) => { // focusTo: 특정 좌표로 지도를 이동 및 확대
+            const delta = (zoomDelta ?? 0.8);
+            const target = Math.min(map.getZoom() + delta, 12); // 과확대 방지
+            // 부드럽게 이동/확대
+            map.flyTo([lat, lon], target, { duration: 2.0, easeLinearity: 0.25 });
+        };
+
+        window.addGeoJson = (g) => L.geoJSON(g).addTo(map);
+    </script>
+
+    <script>
+        let loadingInterval = null;
+
+        function showLoadingMessage() {
+            const old = document.getElementById('loadingOverlay');
+            if (old) old.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+            overlay.style.display = 'flex';
+            overlay.style.flexDirection = 'column';
+            overlay.style.justifyContent = 'center';
+            overlay.style.alignItems = 'center';
+            overlay.style.color = 'white';
+            overlay.style.fontSize = '24px';
+            overlay.style.zIndex = '2000';
+            overlay.style.fontFamily = 'Segoe UI, sans-serif';
+            overlay.innerHTML = `
+            <div id="loadingText">어디로 가게 될까요?</div>
+            <div style="margin-top: 20px; font-size:18px; opacity:0.8;">🗺️ 여행 경로를 탐색 중입니다...</div>
+          `;
+            document.body.appendChild(overlay);
+
+            void overlay.offsetWidth;
+            overlay.classList.add('fade-in');
+
+            const messages = [
+                "🧭 지도를 펼치는 중...",
+                "✈️ 어디로 가게 될까요?",
+                "🌍 랜덤 여행지를 고르는 중...",
+                "🏝️ 준비 중입니다..."
+            ];
+
+            let i = 0;
+            loadingInterval = setInterval(() =>
+            {
+                const text = document.getElementById("loadingText");
+                if (!text) {
+                    clearInterval(loadingInterval);
+                    return;
+                }
+                text.textContent = messages[i % messages.length];
+                i++;
+            }, 1000);
+        }
+
+        function hideLoadingMessage()
+        {
+            const overlay = document.getElementById('loadingOverlay');
+            if (!overlay) return;
+
+            if (loadingInterval)
+            {
+                clearInterval(loadingInterval);
+                loadingInterval = null;
+            }
+
+            overlay.classList.remove('fade-in');
+            void overlay.offsetWidth;
+            overlay.classList.add('fade-out');
+
+            overlay.addEventListener('animationend', () =>
+            {
+                overlay.remove();
+            }, { once: true });
+        }
+    </script>
+
+</body>
+</html>

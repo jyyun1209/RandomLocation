@@ -9,6 +9,9 @@
 #include <qlabel.h>
 #include <qpixmap.h>
 #include <qmessagebox.h>
+#include <QCoreApplication>
+#include <qprocess.h>
+#include <qdebug.h>
 
 #include <iostream>
 #include <Windows.h>
@@ -30,6 +33,7 @@ public slots:
 	void slotButtonMapFileClicked();
 	void slotButtonMaskFileClicked();
 	void slotButtonRunClicked();
+	void slotButtonRunClicked_PythonTest();
 
 private:
 	Ui::MainWindowClass ui;
