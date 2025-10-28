@@ -43,7 +43,8 @@ kor_proj = kor.to_crs(aea_korea)
 poly = unary_union(kor_proj.geometry.values)
 
 
-N = 20
+#N = 20
+N = 1
 pts_proj = random_points_in_polygon(poly, N)
 gdf_pts = gpd.GeoDataFrame(geometry=gpd.GeoSeries(pts_proj, crs=aea_korea)).to_crs(4326)
 
