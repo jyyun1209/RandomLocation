@@ -2,18 +2,15 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "RandomLocation"
-#define MyAppVersion "1.1.2"
-#define MyAppPublisher "jyyun1209"
-#define MyAppURL "https://github.com/jyyun1209"
-#define MyAppExeName "RandomLocation.exe"
-#define MyAppAssocName MyAppName + " File"
-#define MyAppAssocExt ".myp"
-#define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
+#define MyAppVersion "2.0.1"
+#define MyAppPublisher "Junyoug Yun (jyyun1209)"
+#define MyAppURL "https://github.com/jyyun1209/"
+#define MyAppExeName "RandomLocationWinForm.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{A8DA20E6-AD6B-4CE5-B8AC-82B5E04C6F1A}
+AppId={{DA952664-D250-4A56-B5D9-028C3DFD7047}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -31,12 +28,11 @@ ArchitecturesAllowed=x64compatible
 ; meaning it should use the native 64-bit Program Files directory and
 ; the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64compatible
-ChangesAssociations=yes
 DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users).
 PrivilegesRequired=lowest
-OutputDir=D:\Personal\05.Project\00.RandomLocation\00.RandomLocation\InstallPack
-OutputBaseFilename=RandomLocation-setup
+OutputDir=.
+OutputBaseFilename=RandomLocation2.0.1-setup
 SolidCompression=yes
 WizardStyle=modern
 
@@ -48,15 +44,25 @@ Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "D:\Personal\05.Project\00.RandomLocation\00.RandomLocation\release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Personal\05.Project\00.RandomLocation\00.RandomLocation\release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\x64\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\x64\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
-[Registry]
-Root: HKA; Subkey: "Software\Classes\{#MyAppAssocExt}\OpenWithProgids"; ValueType: string; ValueName: "{#MyAppAssocKey}"; ValueData: ""; Flags: uninsdeletevalue
-Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}"; ValueType: string; ValueName: ""; ValueData: "{#MyAppAssocName}"; Flags: uninsdeletekey
-Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
-Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+[Code]
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  // 실제 설치가 시작되기 직전 시점
+  if CurStep = ssInstall then
+  begin
+    // 기존 설치 폴더가 존재한다면 삭제
+    if DirExists(ExpandConstant('{app}')) then
+    begin
+      Log('Deleting existing installation folder: ' + ExpandConstant('{app}'));
+      // (하위 폴더 포함, 읽기전용 포함, 폴더 자체 포함)
+      DelTree(ExpandConstant('{app}'), True, True, True);
+    end;
+  end;
+end;
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
